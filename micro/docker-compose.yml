@@ -1,0 +1,34 @@
+name: school-micro
+services:  #the containers
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: redhat
+      MYSQL_DATABASE: schooldb
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: redhat
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ~/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [school-net]
+
+  student-app:
+    image: amitfreeze/aug_wd_micro_student:latest
+    container_name: student-app
+    networks: [school-net]
+  course-app:
+    image: amitfreeze/aug_wd_micro_course:latest
+    container_name: course-app
+    networks: [school-net]
+  frontend-app:
+    image: amitfreeze/aug_wd_micro_frontend:latest
+    container_name: frontend-app
+    ports: 
+      - "5000:5000"
+    depends_on: [student-app,course-app]
+    networks: [school-net]
+networks:
+  school-net:
+volumes:
+  mysql-data:      

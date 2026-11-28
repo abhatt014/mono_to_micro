@@ -1,0 +1,48 @@
+pipeline {
+  agent {label 'testing'}       // where the build runs
+
+  environment {
+    IMAGE = 'amitfreeze/aug_wd_mono'
+    TAG   = "${env.BUILD_NUMBER}"
+    APP = "school-app"
+  }
+
+  stages {
+
+    stage('build') {
+      steps {
+        sh'docker build -t amitfreeze/aug_wd_micro_course:$TAG -t amitfreeze/aug_wd_micro_course:latest ./course-app/'
+        sh'docker build -t amitfreeze/aug_wd_micro_student:$TAG -t amitfreeze/aug_wd_micro_student:latest ./student-app/'
+        sh'docker build -t amitfreeze/aug_wd_micro_frontend:$TAG -t amitfreeze/aug_wd_micro_frontend:latest  ./frontend-app/'
+
+      }
+    }
+   stage('push') {
+       steps {
+           withCredentials([usernamePassword(credentialsId: 'docker_hub_cred', passwordVariable: 'HUBPASS', usernameVariable: 'HUBUSER')]) {
+                 sh ' echo "$HUBPASS" | docker login -u $HUBUSER --password-stdin ; '  
+                 sh 'docker push amitfreeze/aug_wd_micro_course:$TAG'
+                 sh 'docker push amitfreeze/aug_wd_micro_course:latest'
+
+                 sh 'docker push amitfreeze/aug_wd_micro_student:$TAG'
+                 sh 'docker push amitfreeze/aug_wd_micro_student:latest'
+                 
+                 sh 'docker push amitfreeze/aug_wd_micro_frontend:$TAG'
+                 sh 'docker push amitfreeze/aug_wd_micro_frontend:latest'
+
+                
+                 
+            }       
+         
+       }
+   } 
+  stage('deploy') {
+      steps {
+            sh 'docker compose down || true'
+            sh 'docker compose up -d'
+      }
+  } 
+  }
+
+
+}
